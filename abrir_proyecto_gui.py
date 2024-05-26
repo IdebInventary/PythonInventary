@@ -15,6 +15,8 @@ laravel_project_path = r"C:\xampp\htdocs\ApiEstadia"
 laravel_project_path_2 = r"C:\xampp\htdocs\ProyectoEstadia"
 # Ruta al icono
 icon_path = r'fav.ico'
+# Ruta al archivo de IP
+ip_update_script = r"C:\xampp\htdocs\ProyectoEstadia\config\ip.py"
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -28,6 +30,22 @@ def get_local_ip():
     finally:
         s.close()
     return ip
+
+def update_env_file(ip):
+    env_file = os.path.join(laravel_project_path_2, '.env')
+    try:
+        with open(env_file, 'r') as file:
+            lines = file.readlines()
+        
+        with open(env_file, 'w') as file:
+            for line in lines:
+                if line.startswith('BACKEND_API'):
+                    file.write(f'BACKEND_API="http://{ip}:8000"\n')
+                else:
+                    file.write(line)
+        print(f"Archivo .env actualizado con la IP: {ip}")
+    except Exception as e:
+        print(f"Error al actualizar el archivo .env: {e}")
 
 def abrir_xampp():
     try:
@@ -61,6 +79,7 @@ def iniciar_proyecto():
 
     def start_projects():
         ip = get_local_ip()
+        update_env_file(ip)
         abrir_xampp()
         time.sleep(2)  # Reducido el tiempo de espera
         abrir_laravel_proyecto(laravel_project_path, 8000, ip)
