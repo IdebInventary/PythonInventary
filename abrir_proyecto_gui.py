@@ -18,6 +18,9 @@ icon_path = r'fav.ico'
 # Ruta al archivo de IP
 ip_update_script = r"C:\xampp\htdocs\ProyectoEstadia\config\ip.py"
 
+# Flag to check if the project is already running
+project_running = False
+
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.settimeout(0)
@@ -65,6 +68,11 @@ def abrir_laravel_proyecto(path, puerto, ip):
         messagebox.showerror("Error", f"Error al iniciar el proyecto en {path}: {e}")
 
 def iniciar_proyecto():
+    global project_running
+    if project_running:
+        messagebox.showwarning("Advertencia", "El proyecto ya está corriendo.")
+        return
+
     waiting_window = Toplevel(root)
     waiting_window.title("Espera")
     waiting_window.geometry("300x100")
@@ -78,6 +86,7 @@ def iniciar_proyecto():
     waiting_window.geometry(f"+{x + 100}+{y + 100}")
 
     def start_projects():
+        global project_running
         ip = get_local_ip()
         update_env_file(ip)
         abrir_xampp()
@@ -85,6 +94,7 @@ def iniciar_proyecto():
         abrir_laravel_proyecto(laravel_project_path, 8000, ip)
         time.sleep(1)  # Reducido el tiempo de espera
         abrir_laravel_proyecto(laravel_project_path_2, 8001, ip)
+        project_running = True
         waiting_window.destroy()
         messagebox.showinfo("Éxito", "Proyecto iniciado correctamente.")
         webbrowser.open(f"http://{ip}:8001")
@@ -110,6 +120,7 @@ def is_process_running(process_name):
         return False
 
 def cerrar_proyectos():
+    global project_running
     try:
         php_running = is_process_running("php.exe")
         xampp_running = is_process_running("xampp-control.exe")  # Cambia "xampp-control.exe" por el nombre correcto si es diferente
@@ -141,6 +152,7 @@ def cerrar_proyectos():
         thread_xampp.join()
         thread_php.join()
         
+        project_running = False
         messagebox.showinfo("Éxito", "Proyecto y XAMPP cerrados correctamente.")
         root.quit()  # Cierra la ventana principal y termina el programa
     except Exception as e:
