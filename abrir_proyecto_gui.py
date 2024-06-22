@@ -14,7 +14,7 @@ xampp_stop_path = r'C:\xampp\xampp_stop.exe'
 laravel_project_path = r"C:\xampp\htdocs\ApiEstadia"
 laravel_project_path_2 = r"C:\xampp\htdocs\ProyectoEstadia"
 # Ruta al icono
-icon_path = r'fav.ico'
+icon_path = r'C:\xampp\htdocs\fav.ico'
 # Ruta al archivo de IP
 ip_update_script = r"C:\xampp\htdocs\ProyectoEstadia\config\ip.py"
 
