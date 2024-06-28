@@ -2,7 +2,7 @@ import subprocess
 import os
 import webbrowser
 import tkinter as tk
-from tkinter import messagebox, Toplevel, Label
+from tkinter import messagebox, Toplevel, Label, Entry, Button, Checkbutton, filedialog, BooleanVar
 from threading import Thread
 import time
 import socket
@@ -17,6 +17,8 @@ laravel_project_path_2 = r"C:\xampp\htdocs\ProyectoEstadia"
 icon_path = r'C:\xampp\htdocs\fav.ico'
 # Ruta al archivo de IP
 ip_update_script = r"C:\xampp\htdocs\ProyectoEstadia\config\ip.py"
+# Ruta al ejecutable de MySQL en XAMPP
+mysql_executable = r'C:\xampp\mysql\bin\mysql.exe'
 
 # Flag to check if the project is already running
 project_running = False
@@ -159,6 +161,89 @@ def cerrar_proyectos():
         print(f"Error al cerrar los proyectos: {e}")
         messagebox.showerror("Error", f"Error al cerrar los proyectos: {e}")
 
+def is_mysql_running():
+    try:
+        result = subprocess.check_output('tasklist | findstr mysqld', shell=True)
+        return "mysqld.exe" in result.decode()
+    except subprocess.CalledProcessError:
+        return False
+
+def importar_base_de_datos():
+    if not is_mysql_running():  # Verifica si MySQL está corriendo
+        messagebox.showerror("Error", "MySQL no está corriendo. Inicia el proyecto antes de importar la base de datos.")
+        return
+    
+    def solicitar_contraseña():
+        # Calcular la posición para centrar la ventana antes de crearla
+        pw_width = 300
+        pw_height = 150
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        x = (screen_width - pw_width) // 2
+        y = (screen_height - pw_height) // 2
+
+        password_window = Toplevel(root)
+        password_window.title("Contraseña")
+        password_window.geometry(f"{pw_width}x{pw_height}+{x}+{y}")
+        password_window.iconbitmap(icon_path)
+        password_window.configure(bg='#2b2b2b')
+
+        Label(password_window, text="Introduce la contraseña:", bg='#2b2b2b', fg='#ffffff', font=("Helvetica", 12)).pack(pady=10)
+        
+        password_entry = Entry(password_window, show='*', bg='#1e1e1e', fg='#ffffff', font=("Helvetica", 12))
+        password_entry.pack(pady=5)
+
+        def toggle_password():
+            if show_password.get():
+                password_entry.config(show='')
+            else:
+                password_entry.config(show='*')
+
+        show_password = BooleanVar()
+        show_password_check = Checkbutton(password_window, text='Mostrar contraseña', variable=show_password, command=toggle_password, bg='#2b2b2b', fg='#ffffff', font=("Helvetica", 10))
+        show_password_check.pack()
+
+        def verificar_contraseña():
+            password = password_entry.get()
+            if password == 'Admin@gmail.com':
+                password_window.destroy()
+                file_path = filedialog.askopenfilename(filetypes=[("SQL files", "*.sql")])
+                if file_path:
+                    importar_db(file_path)
+            else:
+                messagebox.showerror("Error", "Contraseña incorrecta.")
+                password_entry.delete(0, tk.END)
+        
+        btn_verificar = Button(password_window, text="Verificar", command=verificar_contraseña, bg='#2e8b57', fg='#ffffff', font=("Helvetica", 12), relief='flat', padx=20, pady=10)
+        btn_verificar.pack(pady=10)
+        
+        password_window.transient(root)
+        password_window.grab_set()
+        root.wait_window(password_window)
+    
+    def importar_db(file_path):
+        try:
+            db_name = 'api'
+            db_user = 'root'
+            db_pass = ''
+
+            # Crear la base de datos si no existe
+            create_db_command = f'"{mysql_executable}" -u {db_user} -e "CREATE DATABASE IF NOT EXISTS {db_name};"'
+            subprocess.run(create_db_command, shell=True)
+
+            # Importar la base de datos
+            import_command = f'"{mysql_executable}" -u {db_user} {db_name} < "{file_path}"'
+            subprocess.run(import_command, shell=True)
+            
+            messagebox.showinfo("Éxito", "Base de datos creada e importada correctamente.")
+        except Exception as e:
+            print(f"Error al importar la base de datos: {e}")
+            messagebox.showerror("Error", f"Error al importar la base de datos: {e}")
+
+    solicitar_contraseña()
+
+# Resto del código de la interfaz y lógica
+
 root = tk.Tk()
 root.title("Iniciar Proyecto Inventario")
 root.geometry("500x300")
@@ -185,5 +270,8 @@ btn_iniciar.pack(pady=10)
 
 btn_cerrar = tk.Button(frame, text="Cerrar Proyecto", command=cerrar_proyectos, bg='#b22222', fg='#ffffff', font=("Helvetica", 12), relief='flat', padx=20, pady=10)
 btn_cerrar.pack(pady=10)
+
+btn_importar_db = tk.Button(frame, text="Importar Base de Datos", command=importar_base_de_datos, bg='#4682b4', fg='#ffffff', font=("Helvetica", 12), relief='flat', padx=20, pady=10)
+btn_importar_db.pack(pady=10)
 
 root.mainloop()
