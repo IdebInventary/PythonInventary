@@ -19,6 +19,8 @@ icon_path = r'C:\xampp\htdocs\fav.ico'
 ip_update_script = r"C:\xampp\htdocs\ProyectoEstadia\config\ip.py"
 # Ruta al ejecutable de MySQL en XAMPP
 mysql_executable = r'C:\xampp\mysql\bin\mysql.exe'
+# Ruta al script PHP de verificación
+php_verify_script = r"C:\xampp\htdocs\verify_password.php"
 
 # Flag to check if the project is already running
 project_running = False
@@ -203,17 +205,42 @@ def importar_base_de_datos():
         show_password_check = Checkbutton(password_window, text='Mostrar contraseña', variable=show_password, command=toggle_password, bg='#2b2b2b', fg='#ffffff', font=("Helvetica", 10))
         show_password_check.pack()
 
+        def obtener_contraseña_bd():
+            try:
+                query = 'SELECT password FROM users WHERE role = 0;'
+                command = f'{mysql_executable} -u root -e "{query}" api'
+                result = subprocess.check_output(command, shell=True).decode().strip().split('\n')
+                print(f"Resultado del comando MySQL: {result}")  # Agregado para depuración
+                if len(result) > 1:
+                    return result[1].strip()
+                else:
+                    return None
+            except subprocess.CalledProcessError as e:
+                print(f"Error al ejecutar el comando MySQL: {e}")
+                return None
+
         def verificar_contraseña():
             password = password_entry.get()
-            if password == 'Admin@gmail.com':
-                password_window.destroy()
-                file_path = filedialog.askopenfilename(filetypes=[("SQL files", "*.sql")])
-                if file_path:
-                    importar_db(file_path)
+            bd_password = obtener_contraseña_bd()
+            if bd_password:
+                try:
+                    verify_command = f'php {php_verify_script} {password} {bd_password}'
+                    verify_result = subprocess.check_output(verify_command, shell=True).decode().strip()
+                    if verify_result == '1':
+                        password_window.destroy()
+                        file_path = filedialog.askopenfilename(filetypes=[("SQL files", "*.sql")])
+                        if file_path:
+                            importar_db(file_path)
+                    else:
+                        messagebox.showerror("Error", "Contraseña incorrecta.")
+                        password_entry.delete(0, tk.END)
+                except subprocess.CalledProcessError as e:
+                    print(f"Error al ejecutar el comando PHP: {e}")
+                    messagebox.showerror("Error", f"Error al verificar la contraseña: {e}")
             else:
-                messagebox.showerror("Error", "Contraseña incorrecta.")
+                messagebox.showerror("Error", "No se pudo obtener la contraseña de la base de datos.")
                 password_entry.delete(0, tk.END)
-        
+
         btn_verificar = Button(password_window, text="Verificar", command=verificar_contraseña, bg='#2e8b57', fg='#ffffff', font=("Helvetica", 12), relief='flat', padx=20, pady=10)
         btn_verificar.pack(pady=10)
         
