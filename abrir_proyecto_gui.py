@@ -170,12 +170,8 @@ def is_mysql_running():
     except subprocess.CalledProcessError:
         return False
 
-def importar_base_de_datos():
-    if not is_mysql_running():  # Verifica si MySQL está corriendo
-        messagebox.showerror("Error", "MySQL no está corriendo. Inicia el proyecto antes de importar la base de datos.")
-        return
-    
-    def solicitar_contraseña():
+def solicitar_contraseña(callback):
+    def solicitar():
         # Calcular la posición para centrar la ventana antes de crearla
         pw_width = 300
         pw_height = 150
@@ -228,9 +224,7 @@ def importar_base_de_datos():
                     verify_result = subprocess.check_output(verify_command, shell=True).decode().strip()
                     if verify_result == '1':
                         password_window.destroy()
-                        file_path = filedialog.askopenfilename(filetypes=[("SQL files", "*.sql")])
-                        if file_path:
-                            importar_db(file_path)
+                        callback(password)
                     else:
                         messagebox.showerror("Error", "Contraseña incorrecta.")
                         password_entry.delete(0, tk.END)
@@ -247,6 +241,13 @@ def importar_base_de_datos():
         password_window.transient(root)
         password_window.grab_set()
         root.wait_window(password_window)
+    
+    solicitar()
+
+def importar_base_de_datos():
+    if not is_mysql_running():  # Verifica si MySQL está corriendo
+        messagebox.showerror("Error", "MySQL no está corriendo. Inicia el proyecto antes de importar la base de datos.")
+        return
     
     def importar_db(file_path):
         try:
@@ -267,7 +268,37 @@ def importar_base_de_datos():
             print(f"Error al importar la base de datos: {e}")
             messagebox.showerror("Error", f"Error al importar la base de datos: {e}")
 
-    solicitar_contraseña()
+    def verificar_contraseña(password):
+        file_path = filedialog.askopenfilename(filetypes=[("SQL files", "*.sql")])
+        if file_path:
+            importar_db(file_path)
+
+    solicitar_contraseña(verificar_contraseña)
+
+def reiniciar_base_de_datos():
+    if not is_mysql_running():  # Verifica si MySQL está corriendo
+        messagebox.showerror("Error", "MySQL no está corriendo. Inicia el proyecto antes de reiniciar la base de datos.")
+        return
+    
+    def reiniciar_db():
+        try:
+            # Ruta a los comandos de Artisan en Laravel
+            migrate_command = f'php "{laravel_project_path}\\artisan" migrate:refresh'
+            seed_command = f'php "{laravel_project_path}\\artisan" db:seed --class=UserSeed'
+            
+            # Ejecutar comandos de migración y seed
+            subprocess.run(migrate_command, shell=True, check=True)
+            subprocess.run(seed_command, shell=True, check=True)
+            
+            messagebox.showinfo("Éxito", "Base de datos reiniciada correctamente.")
+        except subprocess.CalledProcessError as e:
+            print(f"Error al reiniciar la base de datos: {e}")
+            messagebox.showerror("Error", f"Error al reiniciar la base de datos: {e}")
+
+    def verificar_contraseña(password):
+        reiniciar_db()
+
+    solicitar_contraseña(verificar_contraseña)
 
 # Resto del código de la interfaz y lógica
 
@@ -300,5 +331,8 @@ btn_cerrar.pack(pady=10)
 
 btn_importar_db = tk.Button(frame, text="Importar Base de Datos", command=importar_base_de_datos, bg='#4682b4', fg='#ffffff', font=("Helvetica", 12), relief='flat', padx=20, pady=10)
 btn_importar_db.pack(pady=10)
+
+btn_reiniciar_db = tk.Button(frame, text="Reiniciar Base de Datos", command=reiniciar_base_de_datos, bg='#ffa500', fg='#ffffff', font=("Helvetica", 12), relief='flat', padx=20, pady=10)
+btn_reiniciar_db.pack(pady=10)
 
 root.mainloop()
