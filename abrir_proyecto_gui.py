@@ -238,6 +238,12 @@ def solicitar_contraseña(callback):
         btn_verificar = Button(password_window, text="Verificar", command=verificar_contraseña, bg='#2e8b57', fg='#ffffff', font=("Helvetica", 12), relief='flat', padx=20, pady=10)
         btn_verificar.pack(pady=10)
         
+        def on_password_entry_change(*args):
+            btn_verificar.config(state='normal' if password_entry.get() else 'disabled')
+        
+        password_entry.bind("<KeyRelease>", on_password_entry_change)
+        on_password_entry_change()
+
         password_window.transient(root)
         password_window.grab_set()
         root.wait_window(password_window)
