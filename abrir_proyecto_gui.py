@@ -11,12 +11,12 @@ import socket
 xampp_path = r"C:\xampp\xampp_start.exe"
 xampp_stop_path = r'C:\xampp\xampp_stop.exe'
 # Rutas a los proyectos de Laravel
-laravel_project_path = r"C:\xampp\htdocs\ApiEstadia"
-laravel_project_path_2 = r"C:\xampp\htdocs\ProyectoEstadia"
+laravel_project_path = r"C:\xampp\htdocs\ApiInventary"
+laravel_project_path_2 = r"C:\xampp\htdocs\ProyectoInventary"
 # Ruta al icono
 icon_path = r'C:\xampp\htdocs\fav.ico'
 # Ruta al archivo de IP
-ip_update_script = r"C:\xampp\htdocs\ProyectoEstadia\config\ip.py"
+ip_update_script = r"C:\xampp\htdocs\ProyectoInventary\config\ip.py"
 # Ruta al ejecutable de MySQL en XAMPP
 mysql_executable = r'C:\xampp\mysql\bin\mysql.exe'
 # Ruta al script PHP de verificación
